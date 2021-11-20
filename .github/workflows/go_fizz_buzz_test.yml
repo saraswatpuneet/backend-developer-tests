@@ -5,10 +5,12 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
-
+defaults:
+  run:
+    working-directory: ./unit-testing/pkg/fizzbuzz/
 jobs:
 
-  build:
+  run_go_fizz_buzz_test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
