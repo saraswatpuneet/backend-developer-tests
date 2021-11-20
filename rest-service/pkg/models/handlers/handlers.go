@@ -40,28 +40,33 @@ func AllPeopleHandler(c *gin.Context) {
 		LastName:    lastName,
 		PhoneNumber: phoneNumber,
 	}
-	filterProvided := (currentFilter.FirstName != "" && currentFilter.LastName != "") || currentFilter.PhoneNumber != ""
+	filterProvided := currentFilter.FirstName != "" || currentFilter.LastName != "" || currentFilter.PhoneNumber != ""
 	allPeople := models.AllPeople()
-	outputPeople := make([]*models.Person, 0)
-	// only support if both first and last name are provided or phone number is provided
+	outputPeople := make(map[string]*models.Person, 0)
+	// support if  first or last name are provided or phone number is provided
+	// permutations of first and last name and phone number are supported
 	for _, person := range allPeople {
 		if filterProvided {
 			if currentFilter.PhoneNumber != "" && person.PhoneNumber == currentFilter.PhoneNumber {
-				outputPeople = append(outputPeople, person)
+				outputPeople[person.ID.String()] = person
 			}
-			if currentFilter.FirstName != "" && currentFilter.LastName != "" && person.FirstName == currentFilter.FirstName && person.LastName == lastName {
-				outputPeople = append(outputPeople, person)
+			if (currentFilter.FirstName != "" && person.FirstName == currentFilter.FirstName) || (currentFilter.LastName != "" && person.LastName == lastName) {
+				outputPeople[person.ID.String()] = person
 			}
 		} else {
-			outputPeople = append(outputPeople, person)
+			outputPeople[person.ID.String()] = person
 		}
+	}
+	resultingList := make([]*models.Person, 0)
+	for _, person := range outputPeople {
+		resultingList = append(resultingList, person)
 	}
 	returnStatus := http.StatusOK
 	if len(outputPeople) == 0 {
 		returnStatus = http.StatusNotFound
 	}
 	c.JSON(returnStatus, gin.H{
-		constants.RESPONSE_JSON_DATA:   outputPeople,
+		constants.RESPONSE_JSON_DATA:   resultingList,
 		constants.RESPONSDE_JSON_ERROR: nil,
 	})
 }

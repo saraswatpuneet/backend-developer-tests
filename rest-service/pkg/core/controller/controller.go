@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -27,7 +28,7 @@ func (handler *maxPayloadHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 // BackendController ....
 func BackendController(ctx context.Context, port int, errorChannel chan error) {
 	log.Infof("Initializing router and endpoints.")
-	sdRouter, err := router.BackendRouter()
+	backendRouter, err := router.BackendRouter()
 	if err != nil {
 		errorChannel <- err
 		return
@@ -38,9 +39,9 @@ func BackendController(ctx context.Context, port int, errorChannel chan error) {
 	// init maxHandler to limit size of request input
 	var httpHandler http.Handler
 	if global.Options.MaxPayloadSize > 0 {
-		httpHandler = &maxPayloadHandler{handler: sdRouter, size: global.Options.MaxPayloadSize}
+		httpHandler = &maxPayloadHandler{handler: backendRouter, size: global.Options.MaxPayloadSize}
 	} else {
-		httpHandler = sdRouter
+		httpHandler = backendRouter
 	}
 	global.WaitGroupServer.Add(1)
 	go serverHTTPRoutes(ctx, httpAddress, httpHandler, errorChannel)
@@ -64,22 +65,25 @@ func serverHTTPRoutes(ctx context.Context, httpAddress string, handler http.Hand
 	stopChannel := serverGrace.StopChan()
 	err := serverGrace.ListenAndServe()
 	if err != nil {
-		log.Fatalf("SDController: Failed to start server : %s", err.Error())
+		log.Fatalf("BackendController: Failed to start server : %s", err.Error())
 	}
 	log.Infof("Backend is serving the routes.")
 	for {
 		// wait for the server to stop or be canceled
 		select {
 		case <-stopChannel:
-			log.Infof("SDController: Server shutdown at %s", time.Now())
+			log.Infof("BackendController: Server shutdown at %s", time.Now())
+			os.Exit(1)
 			return
 		case <-ctx.Done():
-			log.Infof("SDController: context done is called %s", time.Now())
+			log.Infof("BackendController: context done is called %s", time.Now())
 			serverGrace.Stop(time.Second * 2)
+			// call sigterm and set exit signal
+			os.Exit(1)
 		}
 	}
 }
 
 func shutDownBackend() {
-	log.Infof("SDController: Shutting down server at %s", time.Now())
+	log.Infof("BackendController: Shutting down server at %s", time.Now())
 }
