@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 defaults:
   run:
-    working-directory: ./unit-testing/pkg/fizzbuzz/
+    working-directory: unit-testing/pkg/fizzbuzz/
 jobs:
 
   run_go_fizz_buzz_test:
