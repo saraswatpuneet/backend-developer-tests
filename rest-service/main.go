@@ -14,7 +14,7 @@ func main() {
 	fmt.Println("SP// Backend Developer Test - RESTful Service")
 	fmt.Println()
 	ctx, cancel := context.WithCancel(context.Background())
-	// Only log the warning severity or above.
+	// Log every logrus message
 	if global.Options.Debug {
 		log.SetLevel(log.DebugLevel)
 	}
