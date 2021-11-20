@@ -65,9 +65,13 @@ func AllPeopleHandler(c *gin.Context) {
 	if len(outputPeople) == 0 {
 		returnStatus = http.StatusNotFound
 	}
+	errorResponse := ""
+	if returnStatus == http.StatusNotFound {
+		errorResponse = fmt.Errorf("no people found with specified descriptiuon").Error()
+	}
 	c.JSON(returnStatus, gin.H{
 		constants.RESPONSE_JSON_DATA:   resultingList,
-		constants.RESPONSDE_JSON_ERROR: nil,
+		constants.RESPONSDE_JSON_ERROR: errorResponse,
 	})
 }
 
