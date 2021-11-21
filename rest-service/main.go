@@ -17,8 +17,11 @@ func main() {
 	// Log every logrus message
 	if global.Options.Debug {
 		log.SetLevel(log.DebugLevel)
+	} else {
+		log.SetLevel(log.TraceLevel)
 	}
 
+	log.SetFormatter(&log.JSONFormatter{})
 	// Initialize Rest APIs and start graceful server
 	err := coreserver.CoreServer(ctx, cancel)
 	if err != nil {

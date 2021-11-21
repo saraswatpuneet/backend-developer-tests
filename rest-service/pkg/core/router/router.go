@@ -18,10 +18,8 @@ func BackendRouter() (*gin.Engine, error) {
 	restRouter.Use(cors.New(configCors))
 	// help us recover from panic and log
 	restRouter.Use(gin.Recovery())
-
-	// TODO: inti route handlers
-
-	//
+	
+	// if in production gin will be set to release mode
 	if !global.Options.Debug {
 		gin.SetMode(gin.ReleaseMode)
 	}

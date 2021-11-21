@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	uuid "github.com/satori/go.uuid"
@@ -32,32 +33,45 @@ func HealthCheckHandler(c *gin.Context) {
 // AllPeopleHandler ... single handler to either get all people to based on provided filters
 func AllPeopleHandler(c *gin.Context) {
 	log.Info("Request is made to get list of people")
+	resultingList := make([]*models.Person, 0)
 	firstName := c.Query("first_name")
 	lastName := c.Query("last_name")
 	phoneNumber := c.Query("phone_number")
 	currentFilter := contracts.FilterContract{
 		FirstName:   firstName,
 		LastName:    lastName,
-		PhoneNumber: phoneNumber,
+		PhoneNumber: strings.ReplaceAll(phoneNumber, " ", ""),
+	}
+	if (currentFilter.FirstName != "" && currentFilter.LastName == "") || (currentFilter.LastName != "" && currentFilter.FirstName == "") {
+		c.JSON(http.StatusBadRequest, gin.H{
+			constants.RESPONSE_JSON_DATA:   resultingList,
+			constants.RESPONSDE_JSON_ERROR: fmt.Errorf("first_name and last_name must be provided together").Error(),
+		})
+	}
+
+	if (currentFilter.FirstName != "" || currentFilter.LastName != "") && currentFilter.PhoneNumber != "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			constants.RESPONSE_JSON_DATA:   resultingList,
+			constants.RESPONSDE_JSON_ERROR: fmt.Errorf("current filters do not support query by name as well as phone number").Error(),
+		})
 	}
 	filterProvided := currentFilter.FirstName != "" || currentFilter.LastName != "" || currentFilter.PhoneNumber != ""
 	allPeople := models.AllPeople()
 	outputPeople := make(map[string]*models.Person, 0)
-	// support if  first or last name are provided or phone number is provided
-	// permutations of first and last name and phone number are supported
+	// Only support if both first and last name are provided or phone number is provided
+	// permutations of first and last name and phone number are not supported
 	for _, person := range allPeople {
 		if filterProvided {
-			if currentFilter.PhoneNumber != "" && person.PhoneNumber == currentFilter.PhoneNumber {
+			if currentFilter.PhoneNumber != "" && strings.Contains(strings.ReplaceAll(person.PhoneNumber, " ", ""), currentFilter.PhoneNumber) {
 				outputPeople[person.ID.String()] = person
 			}
-			if (currentFilter.FirstName != "" && person.FirstName == currentFilter.FirstName) || (currentFilter.LastName != "" && person.LastName == lastName) {
+			if (currentFilter.FirstName != "" && person.FirstName == currentFilter.FirstName) && (currentFilter.LastName != "" && person.LastName == lastName) {
 				outputPeople[person.ID.String()] = person
 			}
 		} else {
 			outputPeople[person.ID.String()] = person
 		}
 	}
-	resultingList := make([]*models.Person, 0)
 	for _, person := range outputPeople {
 		resultingList = append(resultingList, person)
 	}
