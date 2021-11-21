@@ -45,9 +45,9 @@ update the /options/default.go port field to the desired port.
 ```
 To test the service, you need to install the dependencies and run the following command:
 go get : to get all the required dependencies
-go test : to run the tests, this command should be either run from root to run all test in project or to run specific tests for service run go test in rest-service folder
+go test ./... : to run the tests, this command should be either run from root to run all test in project or to run specific tests for service run go test in rest-service folder
 
-go test -race -covermode=atomic --coverprofile=coverage.out : to check for code coverage 
+go test ./... -race -covermode=atomic --coverprofile=coverage.out : to check for code coverage 
 ```
 
 # Layout of the rest-service project
