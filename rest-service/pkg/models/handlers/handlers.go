@@ -57,7 +57,7 @@ func AllPeopleHandler(c *gin.Context) {
 	}
 	filterProvided := currentFilter.FirstName != "" || currentFilter.LastName != "" || currentFilter.PhoneNumber != ""
 	allPeople := models.AllPeople()
-	outputPeople := make(map[string]*models.Person, 0)
+	outputPeople := make(map[string]*models.Person)
 	// Only support if both first and last name are provided or phone number is provided
 	// permutations of first and last name and phone number are not supported
 	for _, person := range allPeople {
