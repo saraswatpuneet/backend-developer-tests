@@ -4,11 +4,13 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	uuid "github.com/kevinburke/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -170,6 +172,18 @@ func Test_AllPeopleHandlerWithID_negative1(t *testing.T) {
 	httpTester := httptest.NewRecorder()
 	buf := bytes.NewBuffer([]byte(`{}`))
 	req, _ := http.NewRequest("GET", "/v1/people/something", buf)
+	routeEngine.ServeHTTP(httpTester, req)
+	assert.Equal(t, http.StatusBadRequest, httpTester.Code)
+}
+
+func Test_AllPeopleHandlerWithID_negative2(t *testing.T) {
+	routeEngine := gin.Default()
+	routeEngine.GET("/v1/people/:id", PersonWithIDHandler)
+	httpTester := httptest.NewRecorder()
+	buf := bytes.NewBuffer([]byte(`{}`))
+	currentUUID := uuid.NewV4().String()
+	pathWithFakeUUID := fmt.Sprintf("/v1/people/%s", currentUUID)
+	req, _ := http.NewRequest("GET", pathWithFakeUUID, buf)
 	routeEngine.ServeHTTP(httpTester, req)
 	assert.Equal(t, http.StatusNotFound, httpTester.Code)
 }

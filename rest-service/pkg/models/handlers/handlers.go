@@ -98,7 +98,7 @@ func PersonWithIDHandler(c *gin.Context) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Errorf("PersonWithIDHandler ... panicked, wrong id specified: %v", r)
-			c.JSON(http.StatusNotFound, gin.H{
+			c.JSON(http.StatusBadRequest, gin.H{
 				constants.RESPONSE_JSON_DATA:   outputPeople,
 				constants.RESPONSDE_JSON_ERROR: fmt.Errorf("invalid person id").Error(),
 			})
