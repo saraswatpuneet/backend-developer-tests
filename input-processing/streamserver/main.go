@@ -36,7 +36,7 @@ func main() {
 		log.Fatal("cannot start rpc server listener: ", err)
 	}
 	log.Infof("grpc endpoint listen on localhost:%v", PORT)
-	go startRestServer(ctx, streamServer, "8091", lis)
+	go startRestServer(ctx, streamServer, lis)
 	// if system throw any termination stuff let channel handle it and cancel
 	<-holdSignal
 }
@@ -44,7 +44,6 @@ func main() {
 func startRestServer(
 	ctx context.Context,
 	streamServer pb.TextStreamerServer,
-	port string,
 	listener net.Listener,
 ) error {
 	server := grpc.NewServer()
