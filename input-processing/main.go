@@ -8,10 +8,9 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	log "github.com/sirupsen/logrus"
 	pb "github.com/stackpath/backend-developer-tests/input-processing/proto"
 	"github.com/stackpath/backend-developer-tests/input-processing/streamserver"
@@ -19,6 +18,10 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
+
+const (  
+    PORT = ":9192"  
+) 
 
 func main() {
 	fmt.Println("SP// Backend Developer Test - Input Processing")
@@ -43,11 +46,26 @@ func main() {
 	// 		fmt.Println(line)
 	// 	}
 	// }
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	holdSignal := make(chan os.Signal, 1)
+	signal.Notify(holdSignal, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 	// Create a new stream server
 	streamServer := streamserver.NewStreamServer()
 	// grpcListerner for rest api
-	address := fmt.Sprintf("localhost:%d", 8091)
-	startRestServer(streamServer, address)
+	lis, err := net.Listen("tcp", PORT)  
+    if err != nil {  
+        log.Fatalf("failed to listen: %v", err)  
+    }  
+	if err != nil {
+		log.Fatal("cannot start rpc server: ", err)
+	}
+	err = startRestServer(ctx, streamServer, "8091", lis)
+	if err != nil {
+		log.Fatal("cannot start rest server: ", err)
+	}
+	<-holdSignal
 	// stdIOListener for grpc server
 	stdinReader := bufio.NewReader(os.Stdin)
 	stdOutWrite := bufio.NewWriter(os.Stdout)
@@ -55,10 +73,7 @@ func main() {
 	ioListerner := &streamserver.StandardIO{}
 	go startStandarIOServer(streamServer, ioListerner)
 	ioListerner.Ready(ioPipe)
-	holdSignal := make(chan os.Signal, 1)
-	signal.Notify(holdSignal, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 	// if system throw any termination stuff let channel handle it and cancel
-	<-holdSignal
 
 }
 func startStandarIOServer(
@@ -73,21 +88,36 @@ func startStandarIOServer(
 }
 
 func startRestServer(
+	ctx context.Context,
 	streamServer pb.TextStreamerServer,
-	grpcEndpoint string,
+	port string,
+	listener net.Listener,
 ) error {
-	mux := runtime.NewServeMux()
-	dialOptions := []grpc.DialOption{grpc.WithInsecure()}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	err := pb.RegisterTextStreamerHandlerFromEndpoint(ctx, mux, grpcEndpoint, dialOptions)
+	server := grpc.NewServer()
+	pb.RegisterTextStreamerServer(server, streamServer)
+	go func() {
+		log.Fatalln(server.Serve(listener))
+	}()
+	gwmux, err := newGateway(ctx)
 	if err != nil {
+		log.Errorf("error encountered while creating gateway: %v", err)
 		return err
 	}
-	port := strings.Split(grpcEndpoint, ":")[1]
-	addressToServe := fmt.Sprintf(":%s", port)
-	log.Infof("Rest API tied to FindError started at", grpcEndpoint)
+	mux := http.NewServeMux()
+	mux.Handle("/", gwmux)
 
-	return http.ListenAndServe(addressToServe, mux)
+	log.Infof("grpc-gateway listen on localhost:%v", 8091)
+	return http.ListenAndServe(":8091", mux)
+}
+
+func newGateway(ctx context.Context) (http.Handler, error) {
+
+	opts := []grpc.DialOption{grpc.WithInsecure()}
+
+	gwmux := runtime.NewServeMux()
+	if err := pb.RegisterTextStreamerHandlerFromEndpoint(ctx, gwmux, ":9192", opts); err != nil {
+		return nil, err
+	}
+
+	return gwmux, nil
 }

@@ -2,26 +2,25 @@
 // source: stack_stream.proto
 
 /*
-Package _ is a reverse proxy.
+Package __ is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package proto
+package __
 
 import (
 	"context"
 	"io"
 	"net/http"
 
-	"github.com/golang/protobuf/descriptor"
-	"github.com/golang/protobuf/proto"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/grpc-ecosystem/grpc-gateway/utilities"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 // Suppress "imported and not used" errors
@@ -30,7 +29,6 @@ var _ io.Reader
 var _ status.Status
 var _ = runtime.String
 var _ = utilities.NewDoubleArray
-var _ = descriptor.ForMessage
 var _ = metadata.Join
 
 func request_TextStreamer_FindErrorWord_0(ctx context.Context, marshaler runtime.Marshaler, client TextStreamerClient, req *http.Request, pathParams map[string]string) (TextStreamer_FindErrorWordClient, runtime.ServerMetadata, error) {
@@ -56,15 +54,6 @@ func request_TextStreamer_FindErrorWord_0(ctx context.Context, marshaler runtime
 			return err
 		}
 		return nil
-	}
-	if err := handleSend(); err != nil {
-		if cerr := stream.CloseSend(); cerr != nil {
-			grpclog.Infof("Failed to terminate client stream: %v", cerr)
-		}
-		if err == io.EOF {
-			return stream, metadata, nil
-		}
-		return nil, metadata, err
 	}
 	go func() {
 		for {
@@ -128,7 +117,7 @@ func RegisterTextStreamerHandlerFromEndpoint(ctx context.Context, mux *runtime.S
 
 // RegisterTextStreamerHandler registers the http handlers for service TextStreamer to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterTextStreamerHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+func RegisterTextStreamerHandler(ctx context.Context, mux *runtime.ServeMux, conn grpc.ClientConnInterface) error {
 	return RegisterTextStreamerHandlerClient(ctx, mux, NewTextStreamerClient(conn))
 }
 
@@ -143,7 +132,7 @@ func RegisterTextStreamerHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/proto.TextStreamer/FindErrorWord", runtime.WithHTTPPathPattern("/v1/lines"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -163,7 +152,7 @@ func RegisterTextStreamerHandlerClient(ctx context.Context, mux *runtime.ServeMu
 }
 
 var (
-	pattern_TextStreamer_FindErrorWord_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "lines"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_TextStreamer_FindErrorWord_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "lines"}, ""))
 )
 
 var (

@@ -1,8 +1,4 @@
 syntax = "proto3";
-
-option java_multiple_files = true;
-option java_package = "io.grpc.input-processing.finderrors";
-option java_outer_classname = "FindErrorProto";
 option go_package = ".";
 import "google/api/annotations.proto";
 package proto;
