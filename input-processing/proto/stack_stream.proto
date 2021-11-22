@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.grpc.input-processing.finderrors";
+option java_outer_classname = "FindErrorProto";
+option go_package = ".";
+import "google/api/annotations.proto";
+package proto;
+
+// TextStreamer service reading in stream of text bytes.
+service TextStreamer {
+  // Finds the lines where word error is present.
+  rpc FindErrorWord (stream TextInput) returns ( stream ErrorWordLines) {
+    option (google.api.http) = {
+      post : "/v1/lines"
+      body : "*"
+    };
+  }
+}
+
+// Stream message containing text
+message TextInput {
+  string message = 1;
+}
+
+// The stream message containing lines that has word error in them
+message ErrorWordLines {
+  string message = 1;
+}
