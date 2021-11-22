@@ -63,10 +63,15 @@ func serverHTTPRoutes(ctx context.Context, httpAddress string, handler http.Hand
 		},
 	}
 	stopChannel := serverGrace.StopChan()
+	go monitorSignals(stopChannel, errorChannel, ctx, serverGrace)
 	err := serverGrace.ListenAndServe()
 	if err != nil {
 		log.Fatalf("BackendController: Failed to start server : %s", err.Error())
 	}
+
+}
+
+func monitorSignals(stopChannel <-chan struct{}, errorChannel <-chan error, ctx context.Context, serverGrace *graceful.Server) {
 	log.Infof("Backend is serving the routes.")
 	for {
 		// wait for the server to stop or be canceled
@@ -77,6 +82,12 @@ func serverHTTPRoutes(ctx context.Context, httpAddress string, handler http.Hand
 			return
 		case <-ctx.Done():
 			log.Infof("BackendController: context done is called %s", time.Now())
+			serverGrace.Stop(time.Second * 2)
+			// call sigterm and set exit signal
+			os.Exit(1)
+			return
+		case err := <-errorChannel:
+			log.Errorf("BackendController: error channel triggered %v", err.Error())
 			serverGrace.Stop(time.Second * 2)
 			// call sigterm and set exit signal
 			os.Exit(1)
