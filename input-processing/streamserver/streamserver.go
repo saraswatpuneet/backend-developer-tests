@@ -44,15 +44,19 @@ func (s *StreamServer) FindErrorWord(inputStream pb.TextStreamer_FindErrorWordSe
 		}
 		currentMessage := req.GetMessage()
 		// check if message contains word "error" using strings package
-		if strings.Contains(currentMessage, "error") {
-			log.Infof("found error word: %s", currentMessage)
-			err = inputStream.Send(&pb.ErrorWordLines{
-				Message: currentMessage,
-			})
-			if err != nil {
-				currentErr := status.Errorf(codes.Unknown, "cannot send stream response: %v", err)
-				log.Errorf("%v", currentErr)
-				return currentErr
+		// split currentMessage into lines
+		lines := strings.Split(currentMessage, "\n")
+		// iterate through lines
+		for _, line := range lines {
+			// check if line contains word "error"
+			if strings.Contains(line, "error") {
+				// send error message to client
+				err = inputStream.Send(&pb.ErrorWordLines{Message: line})
+				if err != nil {
+					currentErr := status.Errorf(codes.Unknown, "cannot send stream response: %v", err)
+					log.Errorf("%v", currentErr)
+					return currentErr	
+				}
 			}
 		}
 	}
