@@ -3,6 +3,8 @@ package concurrency
 import (
 	"context"
 	"errors"
+	"log"
+	"sync"
 )
 
 // ErrPoolClosed is returned from AdvancedPool.Submit when the pool is closed
@@ -36,5 +38,62 @@ type AdvancedPool interface {
 // running at any one time. An error is returned if maxSlots is less than
 // maxConcurrent or if either value is not greater than zero.
 func NewAdvancedPool(maxSlots, maxConcurrent int) (AdvancedPool, error) {
-	panic("TODO")
+	currentWg := sync.WaitGroup{}
+	currentWg.Add(maxConcurrent)
+	currentPooler := PoolCollection{
+		Tasks:         make(chan func(context.Context), maxSlots),
+		Wg:            &currentWg,
+		maxConcurrent: maxConcurrent,
+		jobCount:      0,
+	}
+	return &currentPooler, nil
+}
+
+func (p *PoolCollection) Close(ctx context.Context) error {
+	// check if context was cancelled
+	select {
+	case <-ctx.Done():
+		return ErrPoolClosed
+	default:
+		p.Wg.Wait()
+		close(p.Tasks)
+	}
+	return nil
+}
+
+func (p *PoolCollection) Submit(ctx context.Context, task func(context.Context)) error {
+	// initial workers with maxconcurrent task if not already initialized
+	if p.jobCount == 0 {
+		for i := 0; i < p.maxConcurrent; i++ {
+			go p.run(ctx)
+		}
+		p.jobCount = p.maxConcurrent
+	}
+	// Submit task, if full wait.
+	select {
+	case <-ctx.Done():
+		log.Println("context cancelled or done")
+		return ErrPoolClosed
+	case p.Tasks <- task:
+		log.Println("slot became available; task submitted")
+	default:
+		log.Println("no slot available; task queued")
+		<-p.Tasks
+		p.Tasks <- task
+		log.Println("slot became available; task submitted")
+	}
+
+	return nil
+}
+
+func (p *PoolCollection) run(ctx context.Context) {
+	defer p.Wg.Done()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case task := <-p.Tasks:
+			task(ctx)
+		}
+	}
 }
