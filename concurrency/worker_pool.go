@@ -10,5 +10,6 @@ type PoolCollection struct {
 	Tasks         chan func(context.Context)
 	Wg            *sync.WaitGroup
 	maxConcurrent int
-	jobCount      int
+	maxCount      int
+	isClosed	  bool
 }

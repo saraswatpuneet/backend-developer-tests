@@ -44,7 +44,8 @@ func NewAdvancedPool(maxSlots, maxConcurrent int) (AdvancedPool, error) {
 		Tasks:         make(chan func(context.Context), maxSlots),
 		Wg:            &currentWg,
 		maxConcurrent: maxConcurrent,
-		jobCount:      0,
+		maxCount:      0,
+		isClosed:      false,
 	}
 	return &currentPooler, nil
 }
@@ -56,24 +57,30 @@ func (p *PoolCollection) Close(ctx context.Context) error {
 		return ErrPoolClosed
 	default:
 		p.Wg.Wait()
+		p.isClosed = true
 		close(p.Tasks)
 	}
 	return nil
 }
 
 func (p *PoolCollection) Submit(ctx context.Context, task func(context.Context)) error {
+
+	// if pool is closed return error
+	if p.isClosed {
+		return ErrPoolClosed
+	}
 	// initial workers with maxconcurrent task if not already initialized
-	if p.jobCount == 0 {
+	if p.maxCount == 0 {
 		for i := 0; i < p.maxConcurrent; i++ {
 			go p.run(ctx)
 		}
-		p.jobCount = p.maxConcurrent
+		p.maxCount = p.maxConcurrent
 	}
-	// Submit task, if full wait.
+	// Submit task, if full wait, if context is done before execute return context error.
 	select {
 	case <-ctx.Done():
 		log.Println("context cancelled or done")
-		return ErrPoolClosed
+		return ctx.Err()
 	case p.Tasks <- task:
 		log.Println("slot became available; task submitted")
 	default:
