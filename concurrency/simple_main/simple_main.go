@@ -23,8 +23,6 @@ func main() {
 	// Start Worker Pool.
 	totalWorker := 10
 	simplePool := concurrency.NewSimplePool(totalWorker)
-	simplePool.Execute()
-
 	type responses struct {
 		id    int
 		value int
@@ -35,6 +33,8 @@ func main() {
 
 	for i := 0; i < totalTask; i++ {
 		simplePool.Submit(func() {
+			// simple function to write to stdin and sleep for 5 seconds
+			// following which worker will be available for next task
 			log.Printf("Running task with id %v", i)
 			time.Sleep(5 * time.Second)
 			resultChannel <- responses{i, i * 2}

@@ -11,7 +11,6 @@ type SimplePool interface {
 	// soon as the task is submitted. If the pool does not have an available slot
 	// for the task, this blocks until it can submit.
 	Submit(func())
-	Execute()
 }
 
 type SimpleWorkerPool struct {
@@ -23,10 +22,12 @@ type SimpleWorkerPool struct {
 // concurrent tasks to run at any one time. maxConcurrent must be greater than
 // zero.
 func NewSimplePool(maxConcurrent int) SimplePool {
-	return &SimpleWorkerPool{
+	simpleWP := &SimpleWorkerPool{
 		maxConcurrent: maxConcurrent,
 		queue:         make(chan func(), maxConcurrent),
 	}
+	go simpleWP.execute()
+	return simpleWP
 }
 
 // Submit queues up the given task to be executed asynchronously via bufffered channel.
@@ -35,7 +36,7 @@ func (p *SimpleWorkerPool) Submit(task func()) {
 }
 
 // Execute executes all queued tasks.
-func (p *SimpleWorkerPool) Execute() {
+func (p *SimpleWorkerPool) execute() {
 	for i := 0; i < p.maxConcurrent; i++ {
 		go func(i int) {
 			for task := range p.queue {
