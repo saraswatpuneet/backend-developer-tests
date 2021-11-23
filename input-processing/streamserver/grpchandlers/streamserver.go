@@ -67,16 +67,16 @@ func StreamErrorManager(ctx context.Context) error {
 	err := ctx.Err()
 	switch err {
 	case context.Canceled:
-		currentErr := status.Errorf(codes.Canceled, "request is canceled", err)
+		currentErr := status.Errorf(codes.Canceled, "request is canceled %v", err)
 		log.Errorf("%v", currentErr)
 		return currentErr
 	case context.DeadlineExceeded:
-		currentErr := status.Errorf(codes.DeadlineExceeded, "request is canceled", err)
+		currentErr := status.Errorf(codes.DeadlineExceeded, "request is canceled: %v", err)
 		log.Errorf("%v", currentErr)
 		return currentErr
 	default:
 		if err != nil {
-			currentErr := status.Errorf(codes.Unknown, "error caught by streaming function", err)
+			currentErr := status.Errorf(codes.Unknown, "error caught by streaming function %v", err)
 			log.Errorf("%v", currentErr)
 			return currentErr
 		}
