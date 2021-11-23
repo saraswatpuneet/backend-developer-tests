@@ -9,16 +9,18 @@ Note: currently the rpc port :9192 and http port: 8091 are hardcoded in the stre
 
 ## Usage and Testing
 ```
-1. streamserver: to build and run the server run
+1. go test ./..: unit test running end to end check against server using bufcon package.    
+    Further tests can be added without starting server rather mocking the rpc service
+2. streamserver: to build and run the server run
     1. cd streamserver/
     2. make run: will build server binary and run it
     3. go run main.go : alternative to make run
-2. streamclient: to build and run the client run
+3. streamclient: to build and run the client run
     1. cd streamclient/
     2. make run: will build client binary and run it
     3. go run main.go : alternative to make run
     4. streamclient will connect to server via grpc connection and takes input from command line and streams to server, server will return lines which has word "error"
-3. Calling via http: (checkout postman file in /postman folder)
+4. Calling via http: (checkout postman file in /postman folder)
     POST: http://localhost:8091/v1/lines
     Body: {"message": "hello world we have an error \n another error"}
     Expected output: two lines of response from server since error is present in the input separated by newline
@@ -35,3 +37,7 @@ Note: currently the rpc port :9192 and http port: 8091 are hardcoded in the stre
 ```
 1. A bi-directional grpc stream enables streaming large data saying reading a file and writing contents to a stream.
 2 grpc stream generally limits data size to 4MB so for such dev only applications, we can increasing the limit to desired level but ideally we should implement a chunking mechanism or define high level interface that can be extended to create custom chunks.
+
+one way to increase message size from default start server and client with maxSize call option specified
+ grpc.WithDefaultCallOptions(grpc.MaxRecvMsgSize(maxMsgSize), grpc.MaxSendMsgSize(maxMsgSize))
+```
