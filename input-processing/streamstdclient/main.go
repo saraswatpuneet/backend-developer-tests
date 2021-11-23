@@ -20,7 +20,9 @@ const (
 func main() {
 	fmt.Println("SP// Backend Developer Test - Input Processing")
 	fmt.Println()
-
+	fmt.Println("..............................................")
+	fmt.Println("Type/Paste text and grpc server will return lines which have word error in it otherwise blank")
+	fmt.Println("..............................................")
 	// Read STDIN into a new buffered reader
 	reader := bufio.NewReader(os.Stdin)
 	ctx := context.Background()
