@@ -74,8 +74,8 @@ logrus is set to log json format for any level of logging. By default in debug m
 In production mode, the service will log at TraceLevel Level which entail finer-grained informational events than the Debug.
 ```
 
-# End to End Testing
+# Ops
 ```
-go test will run all the unit test as well as spin off a server to run the end to end test. checkout end_to_end_test.go for more details.
+Logrus is used to enabled json formatted logs from info level, error level to simple debug level. In a ELK stack or open telemetry these json fields can be set as trigger point when specific level of error occurs. 
 ```
 
