@@ -43,7 +43,7 @@ func main() {
 
 	for i := 0; i < totalTask; i++ {
 		res := <-resultChannel
-		log.Printf("Task %d has been finished with result %d", res.id, res.value)
+		log.Printf("Task %d with results:  %d", res.id, res.value)
 	}
 
 	<-waitC
